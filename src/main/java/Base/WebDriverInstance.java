@@ -29,7 +29,7 @@ public class WebDriverInstance {
         WebDriver driver = null;
 
         Properties prop = new Properties();
-        // Düzeltilmiş yol - java klasörü kaldırıldı
+        // Yol düzeltildi - resources klasörü src/main altında
         FileInputStream data = new FileInputStream(
                 System.getProperty("user.dir") + "/src/main/resources/config.properties");
         prop.load(data);
@@ -55,7 +55,9 @@ public class WebDriverInstance {
     }
 
     public static void cleanupDriver() {
-        driver.get().quit();
-        driver.remove();
+        if (driver.get() != null) {
+            driver.get().quit();
+            driver.remove();
+        }
     }
 }

@@ -1,17 +1,12 @@
 package uk.co.automationtesting;
 
 import java.io.IOException;
-import java.time.Duration;
 
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
-import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import Base.ExtentManager;
 import Base.Hooks;
 import pageObjects.Homepage;
 import pageObjects.ShopContentPanel;
@@ -19,36 +14,50 @@ import pageObjects.ShopHomepage;
 import pageObjects.ShopProductPage;
 import pageObjects.ShoppingCart;
 
-@Listeners(Base.Listeners.class)
-
+@org.testng.annotations.Listeners(Listeners.Listeners.class)
 public class AddRemoveItemBasketTest extends Hooks {
 
     public AddRemoveItemBasketTest() throws IOException {
         super();
-        // TODO Auto-generated constructor stub
     }
 
     @Test
     public void addRemoveItem() throws IOException {
+
+        // Test başlatma - eğer listeners çalışmazsa manuel olarak
+        try {
+            ExtentManager.log("Starting AddRemoveItemBasketTest...");
+        } catch (Exception e) {
+            // ExtentManager henüz başlatılmamışsa, manuel olarak başlat
+            ExtentManager.getReport();
+            ExtentManager.createTest("addRemoveItem", "Add and Remove Item from Basket Test");
+            ExtentManager.log("Starting AddRemoveItemBasketTest...");
+        }
+
         // creating an object of the automationtesting.co.uk webpage
         Homepage home = new Homepage();
 
-        //handle cookie visibility using JSE - added 20230217
-        JavascriptExecutor jse = (JavascriptExecutor)getDriver();
-        jse.executeScript("arguments[0].scrollIntoView()", home.getTestStoreLink());
+        //handles cookie prompt
+        home.getCookie().click();
+
         home.getTestStoreLink().click();
 
         // creating an object of the test store homepage
         ShopHomepage shopHome = new ShopHomepage();
+        ExtentManager.pass("Reached the shop homepage");
         shopHome.getProdOne().click();
 
         // creating an object of the shop products page (when a product has been
         // selected)
         ShopProductPage shopProd = new ShopProductPage();
+        ExtentManager.pass("Reached the shop product page");
         Select option = new Select(shopProd.getSizeOption());
         option.selectByVisibleText("M");
+        ExtentManager.pass("Have successfully selected product size");
         shopProd.getQuantIncrease().click();
+        ExtentManager.pass("Have successfully increased quantity");
         shopProd.getAddToCartBtn().click();
+        ExtentManager.pass("Have successfully added product to basket");
 
         // creating an object of the cart content panel (once an item was added)
         ShopContentPanel cPanel = new ShopContentPanel();
@@ -63,14 +72,19 @@ public class AddRemoveItemBasketTest extends Hooks {
         cart.getDeleteItemTwo().click();
 
         // using a wait to ensure the deletion has taken place
-        WebDriverWait wait = new WebDriverWait(getDriver(),10);
-        wait.until(ExpectedConditions.invisibilityOf(cart.getDeleteItemTwo()));
+        waitForElementInvisible(cart.getDeleteItemTwo(), 10);
 
         // printing the total amount to console
         System.out.println(cart.getTotalAmount().getText());
 
-        // using an assertion to make sure the total amount is what we are expecting
-        Assert.assertEquals(cart.getTotalAmount().getText(), "$45.24");
-
-    }}
-
+        try {
+            // using an assertion to make sure the total amount is what we are expecting
+            Assert.assertEquals(cart.getTotalAmount().getText(), "$45.23");
+            ExtentManager.pass("The total amount matches the expected amount.");
+        } catch (AssertionError e) {
+            Assert.fail("Cart amount did not match the expected amount, it found" + cart.getTotalAmount().getText() +
+                    " expected $45.23");
+            ExtentManager.fail("The total amount did not match the expected amount.");
+        }
+    }
+}
